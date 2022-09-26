@@ -15,5 +15,3 @@ function checkFuel()
         print("Mhh.. tasty fuel! (level="..tostring(turtle.getFuelLevel())..")")
     end
 end
- 
-checkFuel()
