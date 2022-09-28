@@ -1,46 +1,78 @@
-function checkFuel() 
-    if turtle.getFuelLevel() < 5 then
-        if turtle.getItemCount(1) < 1 then
-            print("Waiting for fuel in slot 1..")
-            while not turtle.refuel(0) do
-                turtle.select(1)
-                if turtle.getItemCount(1) > 0 then
-                    print("I can't use item in slot 1 as fuel!")
-                end
-                sleep(2.5)
-            end
+-- Turtle Resin Farm v4.1 by Koboo
+ 
+-- variables
+local minFuelLevel = 6
+local woodSlot = 2
+ 
+-- inventory
+ 
+function refuelTurtle() 
+    -- Check if Fuel Level is below our minimum level
+    if turtle.getFuelLevel() <= minFuelLevel then
+        
+        print("Waiting for fuel..")
+        -- check if we got something to refuel
+        local useableFuelSlot = findFuelSlot()
+        while useableFuelSlot == nil do
+            os.pullEvent("turtle_inventory")
+            useableFuelSlot = findFuelSlot()
         end
-        turtle.refuel(1)
-        print("Mhh.. tasty fuel! (level="..tostring(turtle.getFuelLevel())..")")
+        local fuelCount = turtle.getItemCount(useableFuelSlot)
+        turtle.select(useableFuelSlot)
+        turtle.refuel(fuelCount)
+        print("Hmm, that was tasty!")
     end
 end
  
-function checkItem(itemName, slot)
-    local data = turtle.getItemDetail()
-    if turtle.getItemCount(slot) == 0 and not (data and data.name == itemName) then
-        print("Waiting for "..tostring(itemName).." in slot "..tostring(slot).."..")
-        turtle.select(slot)
-        while not (data and data.name == itemName) do
-            data = turtle.getItemDetail()
-            sleep(2.5)
+function findFuelSlot()
+    local useableFuelSlot = nil
+    for f=1,16 do
+        turtle.select(f)
+        local isFuel = turtle.refuel(0)
+        if isFuel then
+            local itemCount = turtle.getItemCount(f)
+            if itemCount >= 1 then
+                useableFuelSlot = f
+                break
+            end
         end
     end
+    return useableFuelSlot
+end
+ 
+-- main
+ 
+ 
+ function findItemSlot(itemName)
+    local useableWoodSlot = nil
+    for f=1,16 do
+        local data = turtle.getItemDetail(f)
+        if data then
+            --print(textutils.serialize(data))
+            local isRubberWood = data.name == itemName;
+            --print("Wood: "..tostring(isRubberWood))
+            if isRubberWood then
+                useableWoodSlot = f;
+                break
+            end
+        end
+    end
+    return useableWoodSlot
 end
  
 function farmResin()
     local woodName = "ic2:blockrubwood"
-    checkItem(woodName, 2)
-    local blocks = 0
-    while not turtle.detectDown() do
-        checkFuel()
-        turtle.select(2)
-        turtle.placeDown()
+    local woodSlot = findItemSlot(woodName)
+    while woodSlot == nil do
+        print("Waiting for rubber wood")
+        os.pullEvent("turtle_inventory")
+        woodSlot = findItemSlot(woodName)
+    end
+    while turtle.detectDown() do
+        refuelTurtle()
         turtle.digDown()
-        blocks = blocks + 1
-        if blocks == 10 then
-            print("Farmed sticky resin! Ending script..")
-            break
-        end
+        turtle.select(woodSlot)
+        turtle.placeDown()
         sleep(1)
     end
 end
