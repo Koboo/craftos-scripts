@@ -1,0 +1,49 @@
+-- Name: Mob Attacking
+-- Author: Koboo 
+-- Version: 1.0
+ 
+-- Fueling
+ 
+function refuelTurtle() 
+    -- Check if Fuel Level is below our minimum level
+    if turtle.getFuelLevel() <= 5 then
+ 
+        print("Waiting for fuel..")
+        -- check if we got something to refuel
+        local useableFuelSlot = findFuelSlot()
+        while useableFuelSlot == nil do
+            os.pullEvent("turtle_inventory")
+            useableFuelSlot = findFuelSlot()
+        end
+        local fuelCount = turtle.getItemCount(useableFuelSlot)
+        turtle.select(useableFuelSlot)
+        turtle.refuel(fuelCount)
+        print("Hmm, that was tasty!")
+    end
+end
+ 
+function findFuelSlot()
+    local useableFuelSlot = nil
+    for f=1,16 do
+        turtle.select(f)
+        local isFuel = turtle.refuel(0)
+        if isFuel then
+            local itemCount = turtle.getItemCount(f)
+            if itemCount >= 1 then
+                useableFuelSlot = f
+                break
+            end
+        end
+    end
+    return useableFuelSlot
+end
+ 
+function main()
+    while true do
+        refuelTurtle()
+        turtle.attack()
+        sleep(1)
+    end
+end
+ 
+main()
